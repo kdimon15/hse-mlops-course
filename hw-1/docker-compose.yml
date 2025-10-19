@@ -1,0 +1,11 @@
+services:
+  ml-inference:
+    build: .
+    container_name: ml-inference
+    volumes:
+      - ../data/models:/app/models:ro
+      - ./input:/app/input:ro
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+
