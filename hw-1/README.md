@@ -50,7 +50,7 @@ cp ../data/test.csv input/
 Сборка и запуск через docker-compose:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 ### 4. Результаты
