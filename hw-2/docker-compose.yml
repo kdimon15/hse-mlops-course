@@ -1,0 +1,122 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:8.1.0
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/tmp/kraft-combined-logs
+    user: root
+    command: >
+      bash -c "
+      if [ ! -f /tmp/kraft-combined-logs/meta.properties ]; then
+        kafka-storage format -t MkU3OEVBNTcwNTJENDM2Qk -c /etc/kafka/kraft/server.properties;
+      fi;
+      /etc/confluent/docker/run
+      "
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - fraud-net
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: fraud_user
+      POSTGRES_PASSWORD: fraud_pass
+      POSTGRES_DB: fraud_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - fraud-net
+
+  producer:
+    build: .
+    command: python producer.py
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ../data:/app/data:ro
+    environment:
+      PYTHONUNBUFFERED: 1
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - fraud-net
+
+  scoring-service:
+    build: .
+    command: python main.py
+    depends_on:
+      kafka:
+        condition: service_healthy
+      producer:
+        condition: service_started
+    volumes:
+      - ../data/models:/app/models:ro
+    environment:
+      PYTHONUNBUFFERED: 1
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - fraud-net
+
+  db-writer:
+    build: .
+    command: python db_writer.py
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    environment:
+      PYTHONUNBUFFERED: 1
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: fraud_user
+      POSTGRES_PASSWORD: fraud_pass
+      POSTGRES_DB: fraud_db
+    networks:
+      - fraud-net
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    depends_on:
+      - postgres
+    ports:
+      - "8501:8501"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: fraud_user
+      POSTGRES_PASSWORD: fraud_pass
+      POSTGRES_DB: fraud_db
+    networks:
+      - fraud-net
+
+networks:
+  fraud-net:
+    driver: bridge
+
+volumes:
+  kafka-data:
+  postgres-data:

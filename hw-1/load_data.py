@@ -10,8 +10,7 @@ def load_data():
     
     df = pd.read_csv(input_path, parse_dates=['transaction_time'])
     print(f"Загружено {len(df)} записей")
-    
-    # Сохраняем во временную директорию
+
     df.to_pickle("/tmp/data.pkl")
     print("Данные сохранены")
     return df

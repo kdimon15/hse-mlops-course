@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""Основной скрипт для запуска ML inference pipeline"""
-
 import sys
 from load_data import load_data
 from preprocess import preprocess_data

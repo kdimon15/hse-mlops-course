@@ -10,4 +10,3 @@ COPY *.py ./
 RUN mkdir -p /tmp
 
 CMD ["python", "main.py"]
-

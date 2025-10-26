@@ -1,0 +1,8 @@
+catboost==1.2.8
+pandas==2.3.3
+numpy==2.3.4
+matplotlib==3.10.7
+kafka-python==2.2.15
+psycopg2-binary==2.9.11
+streamlit==1.50.0
+sqlalchemy==2.0.44
