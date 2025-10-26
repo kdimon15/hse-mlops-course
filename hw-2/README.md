@@ -37,20 +37,30 @@ test.csv → Producer → Kafka → Scoring → Kafka → DB Writer → PostgreS
 
 ## Как запустить
 
-Первый запуск:
+1. Склонируйте репозиторий:
+```bash
+git clone https://github.com/kdimon15/hse-mlops-course.git
+```
+
+2. Перейдите в папку проекта:
+```bash
+cd hse-mlops-course
+```
+
+3. Положите файл `test.csv` в папку `data`.
+
+4. Перейдите в папку hw-2:
 ```bash
 cd hw-2
+```
+
+5. Запустите сервисы:
+```bash
 docker compose down -v
 docker compose up --build
 ```
 
 UI доступен по адресу: http://localhost:8501
-
-## Что показывает UI
-
-Кнопка "Посмотреть результаты" показывает:
-- 10 последних фродовых транзакций
-- Гистограмму распределения скоров (можно выбрать количество записей от 10 до 500)
 
 ## Основные файлы
 
